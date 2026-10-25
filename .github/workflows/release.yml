@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build single-file exe
+        run: |
+          dotnet publish -c Release -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:DebugType=none
+
+      - name: Create GitHub release
+        run: |
+          gh release create "$env:GITHUB_REF_NAME" `
+            "bin\Release\net8.0-windows\win-x64\publish\WindowThrow.exe" `
+            --title "Window Throw $env:GITHUB_REF_NAME" `
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
